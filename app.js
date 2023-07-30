@@ -1,0 +1,24 @@
+require('dotenv').config({ path: '.env' });
+const express = require('express');
+const helmet = require('helmet');
+const db = require('./src/db');
+const routes = require('./src/lib/routes/index');
+const { requestLogger } = require('./src/common/helpers');
+const expressHttpContext = require('express-http-context');
+const cors = require('cors');
+const app = express();
+const port = 9100;
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./swagger');
+app.use(expressHttpContext.middleware);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use(express.json({ limit: '10mb', type: ['text/*', '*/json'] }));
+app.use(requestLogger);
+db.ping();
+app.use('/api', routes);
+app.use(helmet());
+app.set('trust proxy', true);
+app.use(cors());
+app.listen(port, () => {
+    console.log(`Your app is listening on port ${port}`);
+});
